@@ -1,48 +1,1035 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <title>Polly Insurance Demo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <style>
-    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; }
-    #log { white-space: pre-wrap; background: #f6f8fa; padding: 1rem; border-radius: 8px; }
-    .msg-user { color: #0a58ca; }
-    .msg-assistant { color: #198754; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coverlyze by Polly - Your AI Insurance Agent</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+            color: #2D3748;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding-bottom: 120px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px 20px;
+            background: linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%);
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .header h1 {
+            color: #ffffff;
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0;
+            letter-spacing: -0.025em;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            color: #E2E8F0;
+            font-size: 1.25rem;
+            margin-top: 12px;
+            font-weight: 400;
+            position: relative;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+        }
+
+        .upload-zone {
+            background: #ffffff;
+            border: 2px dashed #CBD5E0;
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            margin: 32px 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .upload-zone:hover {
+            border-color: #6B46C1;
+            background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: #6B46C1;
+            background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+            transform: scale(1.02);
+        }
+
+        .upload-zone p {
+            font-size: 1.125rem;
+            color: #4A5568;
+            margin-bottom: 24px;
+            font-weight: 500;
+        }
+
+        .upload-btn {
+            background: linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(107, 70, 193, 0.2);
+        }
+
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(107, 70, 193, 0.3);
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .chat-container {
+            max-width: 1400px;
+            margin: 32px auto;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 24px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #E2E8F0;
+            display: none;
+            scroll-behavior: smooth;
+        }
+
+        .chat-container.has-messages {
+            display: block;
+        }
+
+        .chat-message {
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            font-size: 1rem;
+            line-height: 1.7;
+            position: relative;
+        }
+
+        .chat-message.user {
+            background: linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%);
+            color: white;
+            margin-left: 80px;
+            margin-right: 20px;
+            box-shadow: 0 4px 6px -1px rgba(107, 70, 193, 0.2);
+        }
+
+        .chat-message.assistant {
+            background: linear-gradient(135deg, #F7FAFC 0%, #ffffff 100%);
+            color: #2D3748;
+            margin-right: 80px;
+            margin-left: 20px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .message-header .icon {
+            margin-right: 8px;
+            font-size: 1.125rem;
+        }
+
+        .message-content {
+            font-weight: 400;
+            line-height: 1.7;
+        }
+
+        /* CSS STYLES FOR BETTER MESSAGE FORMATTING */
+        .message-content h4 {
+            color: #1a202c;
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 20px 0 12px 0;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .chat-message.user .message-content h4 {
+            color: #ffffff;
+            border-bottom-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .message-content ul {
+            margin: 16px 0;
+            padding-left: 0;
+            list-style: none;
+        }
+
+        .message-content li {
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: rgba(107, 70, 193, 0.05);
+            border-left: 4px solid #6b46c1;
+            border-radius: 0 8px 8px 0;
+            line-height: 1.6;
+        }
+
+        .chat-message.user .message-content li {
+            background: rgba(255, 255, 255, 0.15);
+            border-left-color: rgba(255, 255, 255, 0.6);
+        }
+
+        .message-content p {
+            margin: 16px 0;
+            line-height: 1.7;
+        }
+
+        .message-content p:first-child {
+            margin-top: 0;
+        }
+
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .chat-message.user .message-content strong {
+            color: #ffffff;
+        }
+
+        /* PROFESSIONAL INSURANCE TABLE STYLING */
+        .message-content table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .message-content table thead tr {
+            background: #6b46c1 !important;
+            color: white !important;
+        }
+
+        .message-content table th {
+            padding: 12px !important;
+            border: 1px solid #ddd !important;
+            text-align: left !important;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .message-content table td {
+            padding: 12px !important;
+            border: 1px solid #ddd !important;
+            vertical-align: top;
+            line-height: 1.5;
+        }
+
+        .message-content table tbody tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .message-content table tbody tr:hover {
+            background-color: #f1f5f9;
+            transition: background-color 0.2s ease;
+        }
+
+        .chat-message.user .message-content table {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-message.user .message-content table td {
+            border-color: rgba(255, 255, 255, 0.2) !important;
+            color: white;
+        }
+
+        .chat-message.user .message-content table tbody tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
+        .chat-message.user .message-content table tbody tr:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        /* Responsive table for mobile */
+        @media (max-width: 768px) {
+            .message-content table {
+                font-size: 0.8rem;
+            }
+            
+            .message-content table th,
+            .message-content table td {
+                padding: 8px !important;
+            }
+        }
+
+        .chat-input-container {
+            max-width: 1400px;
+            margin: 24px auto;
+            display: flex;
+            gap: 16px;
+            background: #ffffff;
+            padding: 8px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border: 1px solid #E2E8F0;
+            position: sticky;
+            bottom: 20px;
+            z-index: 100;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            background: #F7FAFC;
+            color: #2D3748;
+            transition: all 0.2s ease;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            background: #ffffff;
+            box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: #A0AEC0;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%);
+            color: white;
+            border: none;
+            padding: 16px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 6px -1px rgba(107, 70, 193, 0.2);
+        }
+
+        .send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px -3px rgba(107, 70, 193, 0.3);
+        }
+
+        .send-btn:disabled {
+            background: #CBD5E0;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .download-btn {
+            position: fixed;
+            top: 235px;
+            left: 24px;
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-weight: 600;
+            width: 280px;
+            box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2);
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 10000;
+            display: none;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -3px rgba(16, 185, 129, 0.3);
+        }
+
+        .rate-box {
+            position: fixed;
+            top: 285px;
+            left: 24px;
+            width: 280px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid #E2E8F0;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            z-index: 999;
+            display: none;
+            backdrop-filter: blur(10px);
+        }
+
+        .rate-box h4 {
+            margin: 0 0 20px 0;
+            font-size: 1.125rem;
+            color: #1a202c;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.025em;
+        }
+
+        .rate-icon {
+            width: 24px;
+            height: 24px;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .rate-box table {
+            width: 100%;
+            font-size: 0.95rem;
+            border-collapse: collapse;
+        }
+
+        .rate-box tr {
+            transition: all 0.2s ease;
+        }
+
+        .rate-box tr:hover {
+            background: linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%);
+            border-radius: 8px;
+        }
+
+        .rate-box td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #f1f5f9;
+            position: relative;
+        }
+
+        .rate-box td:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+
+        .rate-box td:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+
+        .rate-box td.carrier {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .rate-box td:last-child {
+            text-align: right;
+            font-weight: 700;
+            color: #6366f1;
+            font-size: 1rem;
+        }
+
+        .rate-box tr:last-child td {
+            border-bottom: none;
+        }
+
+        .rates-download-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            display: none;
+            text-align: center;
+            padding: 32px;
+        }
+
+        .spinner::after {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            border: 3px solid #E2E8F0;
+            border-top: 3px solid #6B46C1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1rem;
+            margin-top: 16px;
+            font-weight: 500;
+            padding: 12px 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .status.uploaded {
+            color: #047857;
+            background: linear-gradient(135deg, #D1FAE5 0%, #ffffff 100%);
+            border: 1px solid #10B981;
+        }
+
+        .status.no-upload {
+            color: #6B7280;
+            background: linear-gradient(135deg, #F9FAFB 0%, #ffffff 100%);
+            border: 1px solid #E5E7EB;
+        }
+
+        .status.error {
+            color: #DC2626;
+            background: linear-gradient(135deg, #FEE2E2 0%, #ffffff 100%);
+            border: 1px solid #EF4444;
+        }
+
+        .feature-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #E2E8F0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #6B46C1 0%, #8B5CF6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+        }
+
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2D3748;
+            margin-bottom: 8px;
+        }
+
+        .feature-description {
+            color: #4A5568;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .header p {
+                font-size: 1rem;
+            }
+            
+            .download-btn {
+                position: relative;
+                top: 0;
+                left: 0;
+                margin: 16px 0;
+                width: 100%;
+            }
+            
+            .rate-box {
+                position: relative;
+                left: 0;
+                width: 100%;
+                margin: 20px 0;
+                top: 0;
+            }
+
+            .chat-message.user {
+                margin-left: 20px;
+                margin-right: 0;
+            }
+
+            .chat-message.assistant {
+                margin-right: 20px;
+                margin-left: 0;
+            }
+
+            .chat-container,
+            .chat-input-container {
+                margin-left: 0;
+                margin-right: 0;
+            }
+
+            .container {
+                padding: 0 16px;
+            }
+
+            body {
+                padding-bottom: 100px;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>Polly Insurance (Demo)</h2>
-  <p>Simple test UI. Use your app's real frontend in production.</p>
+    <div class="header">
+        <h1>Coverlyze by Polly</h1>
+        <p>Upload your Dec Page or ask any insurance question below.</p>
+    </div>
 
-  <div>
-    <input id="msg" placeholder="Ask a question…" size="60"/>
-    <button onclick="sendMessage()">Send</button>
-  </div>
-  <br/>
-  <div id="log"></div>
+    <div class="container">
+        <div class="upload-zone" id="uploadZone">
+            <p>Drop your PDF here or click to browse</p>
+            <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                Browse Files
+            </button>
+            <input type="file" id="fileInput" class="file-input" accept=".pdf" />
+        </div>
 
-<script>
-async function sendMessage(){
-  const m = document.getElementById('msg').value;
-  append('user', m);
-  document.getElementById('msg').value = '';
+        <div class="status no-upload" id="status">No Dec Page uploaded</div>
+        <div class="spinner" id="spinner">Processing...</div>
 
-  const res = await fetch('/chat', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({message: m})
-  });
-  const j = await res.json();
-  append('assistant', j.response || j.error);
-}
+        <button class="download-btn" id="downloadBtn" style="display: none;">
+            ⬇️ Download JSON
+        </button>
 
-function append(role, text){
-  const el = document.getElementById('log');
-  const who = role === 'user' ? 'User' : 'Assistant';
-  const cls = role === 'user' ? 'msg-user' : 'msg-assistant';
-  el.innerHTML += `<div class="${cls}"><strong>${who}:</strong> ${text}</div>\n`;
-}
-</script>
+        <div class="rate-box" id="rateBox">
+            <h4>
+                <div class="rate-icon">📊</div>
+                Live Rate Comparison
+            </h4>
+            <table id="rateTable"></table>
+        </div>
+
+        <div class="chat-container" id="chatContainer"></div>
+
+        <div class="chat-input-container">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Ask your insurance question..." />
+            <button class="send-btn" id="sendBtn">Send</button>
+        </div>
+
+        <div class="feature-cards">
+            <div class="feature-card">
+                <div class="feature-icon">📄</div>
+                <div class="feature-title">Smart Document Analysis</div>
+                <div class="feature-description">Advanced OCR technology extracts and analyzes your insurance documents with precision.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <div class="feature-title">Expert AI Guidance</div>
+                <div class="feature-description">Get instant answers to your insurance questions from our knowledgeable AI assistant.</div>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💰</div>
+                <div class="feature-title">Rate Comparison</div>
+                <div class="feature-description">Compare rates across multiple carriers to find the best coverage for your needs.</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State management
+        let chatHistory = [];
+        let extractedData = null;
+        let fakeQuotes = null;
+
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const uploadZone = document.getElementById('uploadZone');
+        const status = document.getElementById('status');
+        const spinner = document.getElementById('spinner');
+        const chatContainer = document.getElementById('chatContainer');
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const rateBox = document.getElementById('rateBox');
+        const rateTable = document.getElementById('rateTable');
+        const downloadBtn = document.getElementById('downloadBtn');
+
+        // Initialize
+        initializePage();
+
+        function initializePage() {
+            resetToInitialState();
+            loadChatHistory();
+        }
+
+        function resetToInitialState() {
+            status.textContent = 'No Dec Page uploaded';
+            status.className = 'status no-upload';
+            downloadBtn.style.display = 'none';
+            rateBox.style.display = 'none';
+            rateTable.innerHTML = '';
+            extractedData = null;
+            fakeQuotes = null;
+        }
+
+        // Enhanced scroll to bottom function
+        function scrollToBottom() {
+            if (chatContainer) {
+                setTimeout(() => {
+                    chatContainer.scrollTop = chatContainer.scrollHeight;
+                }, 50);
+            }
+            
+            setTimeout(() => {
+                const chatInputContainer = document.querySelector('.chat-input-container');
+                if (chatInputContainer) {
+                    chatInputContainer.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'nearest' 
+                    });
+                }
+            }, 100);
+        }
+
+        // File upload handlers
+        uploadZone.addEventListener('click', (e) => {
+            if (e.target.classList.contains('upload-btn')) {
+                return;
+            }
+            fileInput.click();
+        });
+        
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                handleFileUpload(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+                e.target.value = '';
+            }
+        });
+
+        // Chat handlers
+        sendBtn.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Download handler
+        downloadBtn.addEventListener('click', downloadJSON);
+
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('/get_chat_history');
+                
+                if (!response.ok) {
+                    console.log('No existing chat history found');
+                    return;
+                }
+                
+                const data = await response.json();
+                
+                chatHistory = Array.isArray(data.chat_history) ? data.chat_history : [];
+                const tempExtractedData = data.extracted_data;
+                const tempFakeQuotes = data.fake_quotes;
+
+                chatHistory.forEach(([role, content]) => {
+                    addMessageToUI(role, content);
+                });
+
+                if (chatHistory.length > 0) {
+                    scrollToBottom();
+                }
+
+                const hasValidExtractedData = tempExtractedData && 
+                    (Object.keys(tempExtractedData).length > 0) &&
+                    (tempExtractedData.policy_info || tempExtractedData.vehicles || tempExtractedData.drivers);
+
+                const hasValidQuotes = tempFakeQuotes && 
+                    (typeof tempFakeQuotes === 'object') &&
+                    (Object.keys(tempFakeQuotes).length > 0);
+
+                if (hasValidExtractedData && hasValidQuotes) {
+                    extractedData = tempExtractedData;
+                    fakeQuotes = tempFakeQuotes;
+                    
+                    displayRates(fakeQuotes);
+                    downloadBtn.style.display = 'block';
+                    status.textContent = '✅ Dec Page uploaded and processed';
+                    status.className = 'status uploaded';
+                } else {
+                    resetToInitialState();
+                }
+
+            } catch (error) {
+                console.log('Error loading chat history (normal on first visit):', error);
+                resetToInitialState();
+            }
+        }
+
+        async function handleFileUpload(file) {
+            if (file.type !== 'application/pdf') {
+                alert('Please upload a PDF file.');
+                return;
+            }
+
+            showSpinner('Analyzing PDF and extracting text with enhanced accuracy...');
+            status.textContent = 'Processing PDF...';
+            status.className = 'status';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    hideSpinner();
+                    status.textContent = '✅ Dec Page uploaded and processed with Google OCR';
+                    status.className = 'status uploaded';
+
+                    extractedData = data.extracted_data;
+                    fakeQuotes = data.fake_quotes;
+
+                    displayRates(fakeQuotes);
+                    downloadBtn.style.display = 'block';
+
+                    addMessageToUI('assistant', data.auto_summary);
+                    chatHistory.push(['assistant', data.auto_summary]);
+
+                    scrollToBottom();
+
+                } else {
+                    hideSpinner();
+                    status.textContent = '❌ Error processing PDF';
+                    status.className = 'status error';
+                    alert(data.error || 'Error processing PDF');
+                }
+
+            } catch (error) {
+                hideSpinner();
+                status.textContent = '❌ Error processing PDF';
+                status.className = 'status error';
+                console.error('Upload error:', error);
+                alert('Error processing PDF. Please try again.');
+            }
+        }
+
+        function displayRates(rates) {
+            let tableHTML = '';
+            Object.entries(rates).forEach(([carrier, rate]) => {
+                tableHTML += `<tr><td class="carrier">${carrier}</td><td>${rate.toLocaleString()}</td></tr>`;
+            });
+            rateTable.innerHTML = tableHTML;
+            rateBox.style.display = 'block';
+        }
+
+        function addMessageToUI(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message ${role}`;
+            
+            const icon = role === 'user' ? '👤' : '🤖';
+            const roleLabel = role === 'user' ? 'You' : 'Polly Assistant';
+            
+            // Clean up content - remove markdown code blocks if present
+            let cleanedContent = content;
+            
+            // Remove ```html and ``` wrapper if present
+            if (cleanedContent.includes('```html')) {
+                cleanedContent = cleanedContent.replace(/```html\s*/g, '').replace(/```\s*$/g, '').trim();
+            }
+            
+            // Remove any other code block markers
+            cleanedContent = cleanedContent.replace(/```\w*\s*/g, '').replace(/```\s*$/g, '').trim();
+            
+            // Format content - check for HTML tags
+            let formattedContent;
+            if (cleanedContent.includes('<h4>') || cleanedContent.includes('<ul>') || cleanedContent.includes('<li>') || 
+                cleanedContent.includes('<table>') || cleanedContent.includes('<thead>') || cleanedContent.includes('<tbody>')) {
+                // Content has HTML tags - render as HTML
+                formattedContent = cleanedContent;
+            } else {
+                // Plain text - add basic formatting
+                formattedContent = cleanedContent
+                    .replace(/\n\n/g, '</p><p>')
+                    .replace(/\n/g, '<br>')
+                    .replace(/^\s*/, '<p>')
+                    .replace(/\s*$/, '</p>');
+            }
+            
+            messageDiv.innerHTML = `
+                <div class="message-header">
+                    <span class="icon">${icon}</span>
+                    <span>${roleLabel}</span>
+                </div>
+                <div class="message-content">${formattedContent}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.classList.add('has-messages');
+            
+            scrollToBottom();
+        }
+        async function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            addMessageToUI('user', message);
+            chatHistory.push(['user', message]);
+            chatInput.value = '';
+            sendBtn.disabled = true;
+
+            scrollToBottom();
+
+            try {
+                showSpinner('Thinking...');
+
+                // Include context about uploaded document
+                const payload = {
+                    message: message,
+                    has_document: extractedData !== null,
+                    extracted_data: extractedData,
+                    chat_context: {
+                        document_uploaded: extractedData !== null,
+                        has_rates: fakeQuotes !== null
+                    }
+                };
+
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                hideSpinner();
+
+                if (data.success) {
+                    addMessageToUI('assistant', data.response);
+                    chatHistory.push(['assistant', data.response]);
+                } else {
+                    addMessageToUI('assistant', `Error: ${data.error || 'Unknown error'}`);
+                }
+
+                scrollToBottom();
+
+            } catch (error) {
+                hideSpinner();
+                console.error('Chat error:', error);
+                addMessageToUI('assistant', 'Sorry, there was an error processing your message.');
+                scrollToBottom();
+            } finally {
+                sendBtn.disabled = false;
+                chatInput.focus();
+            }
+        }
+
+        async function downloadJSON() {
+            try {
+                const response = await fetch('/download_json');
+                const blob = await response.blob();
+                
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'dec_page_extracted.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('Download error:', error);
+                alert('Error downloading file.');
+            }
+        }
+
+        function showSpinner(text = 'Loading...') {
+            spinner.style.display = 'block';
+            if (text) {
+                spinner.textContent = text;
+            }
+        }
+
+        function hideSpinner() {
+            spinner.style.display = 'none';
+        }
+    </script>
 </body>
 </html>
