@@ -1,0 +1,2 @@
+from coverlyze import create_app
+app = create_app()

@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Polly Insurance Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font-family: system-ui, Arial, sans-serif; margin: 2rem; }
+    #log { white-space: pre-wrap; background: #f6f8fa; padding: 1rem; border-radius: 8px; }
+    .msg-user { color: #0a58ca; }
+    .msg-assistant { color: #198754; }
+  </style>
+</head>
+<body>
+  <h2>Polly Insurance (Demo)</h2>
+  <p>Simple test UI. Use your app's real frontend in production.</p>
+
+  <div>
+    <input id="msg" placeholder="Ask a question…" size="60"/>
+    <button onclick="sendMessage()">Send</button>
+  </div>
+  <br/>
+  <div id="log"></div>
+
+<script>
+async function sendMessage(){
+  const m = document.getElementById('msg').value;
+  append('user', m);
+  document.getElementById('msg').value = '';
+
+  const res = await fetch('/chat', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({message: m})
+  });
+  const j = await res.json();
+  append('assistant', j.response || j.error);
+}
+
+function append(role, text){
+  const el = document.getElementById('log');
+  const who = role === 'user' ? 'User' : 'Assistant';
+  const cls = role === 'user' ? 'msg-user' : 'msg-assistant';
+  el.innerHTML += `<div class="${cls}"><strong>${who}:</strong> ${text}</div>\n`;
+}
+</script>
+</body>
+</html>
