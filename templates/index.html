@@ -640,7 +640,7 @@
     </div>
 
     <div class="container">
-        <div class="upload-zone" id="uploadZone">
+        <div class="upload-zone" id="uploadZone" style="display:none">
             <p>Drop your PDF here or click to browse</p>
             <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">
                 Browse Files
@@ -1031,5 +1031,120 @@
             spinner.style.display = 'none';
         }
     </script>
+
+// ===== Vehicle → Dec Upload chat workflow (in-chat) =====
+function renderVehicleFormMessage() {
+    const years = Array.from({length: 31}, (_, i) => 2025 - i); // 2025..1995
+    const makes = [
+      "ACURA","ALFA ROMEO","AUDI","BMW","BUICK","CADILLAC","CHEVROLET","CHRYSLER","DODGE","FORD","GENESIS",
+      "GMC","HONDA","HYUNDAI","INFINITI","JAGUAR","JEEP","KIA","LAND ROVER","LEXUS","LINCOLN","MAZDA",
+      "MERCEDES-BENZ","MINI","MITSUBISHI","NISSAN","PORSCHE","RAM","SUBARU","TESLA","TOYOTA","VOLKSWAGEN","VOLVO"
+    ];
+    const yearOpts = years.map(y => `<option value="${y}">${y}</option>`).join('');
+    const makeOpts = makes.map(m => `<option value="${m}">${m}</option>`).join('');
+
+    const html = `
+      <div class="cardish" style="border:1px solid #eef0f4;border-radius:16px;padding:16px;">
+        <h4 style="margin:0 0 10px 0;">Please enter your new vehicle details</h4>
+        <form id="vehicleForm">
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;">
+            <label style="display:grid;gap:6px;font-size:12px;color:#6b7280;">Year
+              <select name="year" class="chat-input" style="height:auto;">${yearOpts}</select>
+            </label>
+            <label style="display:grid;gap:6px;font-size:12px;color:#6b7280;">Make
+              <select name="make" class="chat-input" style="height:auto;">${makeOpts}</select>
+            </label>
+            <label style="grid-column:1/-1;display:grid;gap:6px;font-size:12px;color:#6b7280;">Model
+              <input name="model" class="chat-input" placeholder="e.g., RAV4, MDX" required />
+            </label>
+            <label style="grid-column:1/-1;display:grid;gap:6px;font-size:12px;color:#6b7280;">VIN (optional)
+              <input name="vin" id="vinInput" class="chat-input" placeholder="Enter full VIN (optional)" />
+            </label>
+            <label style="grid-column:1/-1;display:grid;gap:6px;font-size:12px;color:#6b7280;">Short VIN
+              <input name="short_vin" id="shortVinInput" class="chat-input" placeholder="Auto-populated from VIN (last 8 or last 4)" />
+            </label>
+          </div>
+          <button type="submit" class="send-btn" style="margin-top:12px;">Submit</button>
+        </form>
+      </div>
+    `;
+    addMessageToUI('bot', html);
+
+    const vinInput = document.getElementById('vinInput');
+    const shortVinInput = document.getElementById('shortVinInput');
+    if (vinInput && shortVinInput) {
+      vinInput.addEventListener('input', () => {
+        const v = vinInput.value.trim().toUpperCase();
+        if (v.length >= 8) shortVinInput.value = v.slice(-8);
+        else if (v.length >= 4) shortVinInput.value = v.slice(-4);
+        else shortVinInput.value = '';
+      });
+    }
+
+    const form = document.getElementById('vehicleForm');
+    if (form) {
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const fd = new FormData(form);
+        const year = fd.get('year');
+        const make = fd.get('make');
+        const model = fd.get('model');
+        const vin = (fd.get('vin')||'').toString().toUpperCase();
+        const shortVin = (fd.get('short_vin')||'').toString().toUpperCase();
+
+        const confirmHtml = `
+          <p><strong>Got it.</strong> Recorded replacement vehicle:</p>
+          <ul style="margin:.5rem 0 0 1rem;">
+            <li>Year: ${year}</li>
+            <li>Make: ${make}</li>
+            <li>Model: ${model}</li>
+            <li>VIN: ${vin || '<em>—</em>'}</li>
+            <li>Short VIN: ${shortVin || '<em>—</em>'}</li>
+          </ul>`;
+        addMessageToUI('bot', confirmHtml);
+
+        // (Optional) Persist to server here with fetch()
+
+        renderDecUploadPrompt();
+      });
+    }
+  }
+
+  function renderDecUploadPrompt() {
+    const html = `
+      <div class="cardish" style="border:1px solid #eef0f4;border-radius:16px;padding:16px;">
+        <h4 style="margin:0 0 10px 0;">Please upload your Declarations Page (PDF)</h4>
+        <p style="margin:0 0 10px 0;color:#6b7280;">Drag & drop your PDF here, or click to browse.</p>
+        <input id="inChatFile" type="file" accept="application/pdf" style="display:none" />
+        <div id="inChatDrop" style="border:2px dashed #d7dbe7;border-radius:12px;padding:18px;text-align:center;cursor:pointer;">
+          Drop PDF here or <span style="color:#6b46c1;text-decoration:underline;">browse</span>
+        </div>
+      </div>`;
+    addMessageToUI('bot', html);
+
+    const fileInput = document.getElementById('inChatFile');
+    const drop = document.getElementById('inChatDrop');
+    if (drop && fileInput) {
+      drop.addEventListener('click', () => fileInput.click());
+      drop.addEventListener('dragover', (e) => { e.preventDefault(); drop.style.background = '#f8f7ff'; });
+      drop.addEventListener('dragleave', () => { drop.style.background = ''; });
+      drop.addEventListener('drop', (e) => {
+        e.preventDefault(); drop.style.background='';
+        const f = e.dataTransfer.files && e.dataTransfer.files[0];
+        if (f) handleFileUpload(f);
+      });
+      fileInput.addEventListener('change', () => {
+        const f = fileInput.files && fileInput.files[0];
+        if (f) handleFileUpload(f);
+      });
+    }
+  }
+
+  // Kick off the new flow after the page bootstraps
+  window.addEventListener('DOMContentLoaded', () => {
+    try { renderVehicleFormMessage(); } catch (e) { console.warn(e); }
+  });
+// ===== /Vehicle → Dec Upload chat workflow =====
+
 </body>
 </html>
